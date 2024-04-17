@@ -1,4 +1,9 @@
 ﻿using BepInEx;
+using HarmonyLib;
+using RCO.Dev;
+using RCO.MonoBehaviours;
+using UnboundLib.Cards;
+using UnityEngine;
 
 namespace RCO {
     [BepInDependency("com.willis.rounds.unbound")]
@@ -7,10 +12,11 @@ namespace RCO {
 
     [BepInPlugin(ModId, ModName, Version)]
     public class Main:BaseUnityPlugin {
-        public const string ModId = "", 
-            ModName = "", 
-            Version = "0.0.0";
+        public static GameObject playerMonitor;
 
+        public const string ModId = "com.roots.rounds.RoundsCombatOverhaul", 
+            ModName = "RoundsCombatOverhaul", 
+            Version = "0.0.6";
 
         void Awake() {
             var harmony = new Harmony(ModId);
