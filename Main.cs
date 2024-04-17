@@ -11,12 +11,23 @@ namespace RCO {
             ModName = "", 
             Version = "0.0.0";
 
-        void Awake() {
 
+        void Awake() {
+            var harmony = new Harmony(ModId);
+            harmony.PatchAll();
         }
 
         void Start() {
+            playerMonitor = new GameObject("[RCO] PlayerMonitor");
+            playerMonitor.AddComponent<LoseControlMonitor>();
+            DontDestroyOnLoad(playerMonitor);
 
+            // dev card, DO NOT INCLUDE IN FINAL BUILD!
+            CustomCard.BuildCard<LoseControlDevCard>();
+        }
+
+        void Update(){
+            
         }
     }
 }
