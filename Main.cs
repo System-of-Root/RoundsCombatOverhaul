@@ -2,6 +2,7 @@
 using HarmonyLib;
 using RCO.Dev;
 using RCO.MonoBehaviours;
+using UnboundLib;
 using UnboundLib.Cards;
 using UnityEngine;
 
@@ -13,10 +14,11 @@ namespace RCO {
     [BepInPlugin(ModId, ModName, Version)]
     public class Main:BaseUnityPlugin {
         public static GameObject playerMonitor;
+        /**/public static GameObject playerObj;
 
         public const string ModId = "com.roots.rounds.RoundsCombatOverhaul", 
             ModName = "RoundsCombatOverhaul", 
-            Version = "0.0.6";
+            Version = "0.0.7";
 
         void Awake() {
             var harmony = new Harmony(ModId);
@@ -28,6 +30,30 @@ namespace RCO {
             playerMonitor.AddComponent<LoseControlMonitor>();
             DontDestroyOnLoad(playerMonitor);
 
+            this.ExecuteAfterFrames(95, () =>
+            {
+                GameObject[] gameObjects = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
+                foreach (var item in gameObjects)
+                {
+                    if (item.name == "Player" && item.CompareTag("Player"))
+                    {
+                        playerObj = item;
+                        break;
+                    }
+                }
+
+                GeneralInput generalInput = playerObj.GetComponent<GeneralInput>();
+                SilenceHandler silenceHandler = playerObj.GetComponent<SilenceHandler>();
+
+                bool check = (generalInput != null) && (silenceHandler != null);
+
+                if (check)
+                {
+                    playerObj.AddComponent<LoseControlHandler>();
+                    UnityEngine.Debug.Log("[RCO] added [LoseControlHandler] to the original Player object");
+                }
+            });
+            
             // dev card, DO NOT INCLUDE IN FINAL BUILD!
             CustomCard.BuildCard<LoseControlDevCard>();
         }

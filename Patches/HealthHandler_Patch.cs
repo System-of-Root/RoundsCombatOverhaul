@@ -17,12 +17,12 @@ namespace RCO.Patches
         [HarmonyPatch("RPCA_Die")]
         static void RPCA_Die_Prefix(CharacterData ___data)
         {
-            UnityEngine.Debug.Log($"Player[{___data.player.playerID}] Dying");
+            // UnityEngine.Debug.Log($"Player[{___data.player.playerID}] Dying");
             if (___data.isPlaying && !___data.dead)
             {
                 Main.playerMonitor.GetComponent<LoseControlMonitor>().watchList.Add(___data.gameObject);
             }
-            UnityEngine.Debug.Log($"Continue Player[{___data.player.playerID}] Dying");
+            // UnityEngine.Debug.Log($"Continue Player[{___data.player.playerID}] Dying");
         }
 
     }

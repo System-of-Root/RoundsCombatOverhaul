@@ -79,38 +79,39 @@ namespace RCO.Dev
             return "DEV";
         }
 
-        public class LoseControlBullet : RayHitEffect
+    }
+
+    public class LoseControlBullet : RayHitEffect
+    {
+        public static float debuffDuration = 2f;
+
+        public override HasToReturn DoHitEffect(HitInfo hit)
         {
-            public static float debuffDuration = 2f;
-
-            public override HasToReturn DoHitEffect(HitInfo hit)
+            if (hit.transform == null)
             {
-                if (hit.transform == null)
-                {
-                    return HasToReturn.canContinue;
-                }
-                if (hit.transform.gameObject.tag.Contains("Bullet"))
-                {
-                    return HasToReturn.canContinue;
-                }
-
-                if (hit.transform.GetComponent<Player>())
-                {
-                    CharacterData victim = hit.transform.gameObject.GetComponent<CharacterData>();
-
-                    LoseControlHandler handler = victim.player.gameObject.GetOrAddComponent<LoseControlHandler>();
-
-                    handler.RPCA_AddLoseControl(debuffDuration);
-                }
-
+                return HasToReturn.canContinue;
+            }
+            if (hit.transform.gameObject.tag.Contains("Bullet"))
+            {
                 return HasToReturn.canContinue;
             }
 
-            public void Destroy()
+            if (hit.transform.GetComponent<Player>())
             {
-                // UnityEngine.Object.Destroy(this);
+                CharacterData victim = hit.transform.gameObject.GetComponent<CharacterData>();
+
+                LoseControlHandler handler = victim.player.gameObject.GetOrAddComponent<LoseControlHandler>();
+
+                handler.RPCA_AddLoseControl(debuffDuration);
             }
 
+            return HasToReturn.canContinue;
         }
+
+        public void Destroy()
+        {
+            // UnityEngine.Object.Destroy(this);
+        }
+
     }
 }
