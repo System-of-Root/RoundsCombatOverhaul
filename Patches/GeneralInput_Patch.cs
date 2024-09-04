@@ -42,7 +42,7 @@ namespace RCO.Patches {
                 __instance.direction = Vector3.zero;
                 ___data.block.counter = 0f;
             } else {
-                ___data.GetOverhaulData().dashedSinceGrounded = ___data.GetOverhaulData().dashedSinceGrounded || ___data.isGrounded;
+                ___data.GetOverhaulData().groundedSinceDash = ___data.GetOverhaulData().groundedSinceDash || ___data.isGrounded;
             }
 
             ___data.GetComponent<Gravity>().enabled = ___data.GetOverhaulData().dashTime <= 0f && !___data.GetOverhaulData().isGrappled;
@@ -50,13 +50,16 @@ namespace RCO.Patches {
             Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
             Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
 
-            if(__instance.shootIsPressed && !__instance.shootWasReleased) {
+            if(__instance.shootIsPressed && !__instance.shootWasReleased && ___data.GetOverhaulData().groundedSinceGrapple) {
                 __instance.ResetInput();
                 __instance.aimDirection = aim;
+                ___data.GetOverhaulData().isGrappling = true;
                 return;
             }
 
-            if(__instance.shootWasReleased) {
+            if(__instance.shootWasReleased && ___data.GetOverhaulData().groundedSinceGrapple) {
+                ___data.GetOverhaulData().groundedSinceDash = ___data.isGrounded;
+                Unbound.Instance.ExecuteAfterSeconds(2, () => { ___data.GetOverhaulData().isGrappling = false; });
                 float maxLangth = MainCam.instance.cam.orthographicSize;
                 int layerMask = (1 << 11) | (1 << 10);
                 RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, aim, maxLangth, layerMask);
@@ -99,20 +102,26 @@ namespace RCO.Patches {
                 }
 
 
+            } else {
+                ___data.GetOverhaulData().groundedSinceGrapple = ___data.GetOverhaulData().groundedSinceGrapple || ___data.isGrounded;
             }
+
+            if(__instance.jumpWasPressed) ___data.GetOverhaulData().isGrappling = false;
 
             __instance.shootWasPressed = false;
             __instance.shootIsPressed = false;
             __instance.shootWasReleased = false;
 
 
-            if(aim.magnitude > 0.6f) {
+            if(aim.magnitude > 0.6f && !___data.GetOverhaulData().isGrappling) {
                 __instance.aimDirection = aim;
                 __instance.shootWasPressed = true;
                 ___data.weaponHandler.gun.shootPosition.rotation = Quaternion.LookRotation(aim);
                 ___data.weaponHandler.InvokeMethod("Attack");
             }
-            if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f && !__instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime)) {
+            if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f &&
+                !__instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime
+                && !___data.GetOverhaulData().isGrappling)) {
                 ___data.block.sinceBlock = 0f;
                 ___data.block.counter = 0f;
                 ___data.block.reloadParticle.Play();
@@ -122,11 +131,11 @@ namespace RCO.Patches {
                 ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                 ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.5f);
             }
-            if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().dashedSinceGrounded) {
+            if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().groundedSinceDash) {
                 ___data.block.counter = 0f;
                 ___data.GetOverhaulData().dashTime = 0.1f;
                 ___data.GetOverhaulData().dashDirection = move.normalized;
-                ___data.GetOverhaulData().dashedSinceGrounded = ___data.isGrounded;
+                ___data.GetOverhaulData().groundedSinceDash = ___data.isGrounded;
             }
         }
 

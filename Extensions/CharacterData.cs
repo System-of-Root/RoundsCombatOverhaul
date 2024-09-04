@@ -16,18 +16,21 @@ namespace RCO.Extensions
 
         public float dashTime;
         public Vector2 dashDirection;
-        public bool dashedSinceGrounded;
+        public bool groundedSinceDash;
 
         public bool isGrappled;
-        public float grappledTime;
+        public bool isGrappling;
+        public bool groundedSinceGrapple;
 
         public CharacterData_OverhaulData()
         {
             isLostControl = false;
             loseControlTimer = 0f;
             dashTime = 0f;
-            dashedSinceGrounded = false;
+            groundedSinceDash = true;
             isGrappled = false;
+            isGrappling = false;
+            groundedSinceGrapple = true;
         }
     }
 
