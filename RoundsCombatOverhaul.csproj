@@ -103,6 +103,9 @@
 		<Reference Include="UnityEngine.ParticleSystemModule">
 			<HintPath>$(ManagedFolder)\UnityEngine.ParticleSystemModule.dll</HintPath>
 		</Reference>
+		<Reference Include="UnityEngine.Physics2DModule">
+		  <HintPath>F:\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
+		</Reference>
 		<Reference Include="UnityEngine.SpriteMaskModule">
 			<HintPath>$(ManagedFolder)\UnityEngine.SpriteMaskModule.dll</HintPath>
 		</Reference>

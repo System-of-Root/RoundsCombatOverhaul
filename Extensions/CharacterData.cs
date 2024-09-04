@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using UnityEngine;
 
 namespace RCO.Extensions
 {
@@ -14,12 +15,15 @@ namespace RCO.Extensions
         //
 
         public float dashTime;
+        public Vector2 dashDirection;
+        public bool dashedSinceGrounded;
 
         public CharacterData_OverhaulData()
         {
             isLostControl = false;
             loseControlTimer = 0f;
             dashTime = 0f;
+            dashedSinceGrounded = false;
         }
     }
 
