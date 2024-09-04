@@ -43,16 +43,23 @@ namespace RCO.Patches
         [HarmonyPatch("Update")]
         static void Update_Postfix(CharacterData ___data, GeneralInput __instance) {
 
-            if(__instance.shootWasPressed) {
+            Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
+            Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
+
+            if(__instance.shootIsPressed) {
+                __instance.ResetInput();
+                __instance.aimDirection = aim;
+                return;
+            }
+
+            if(__instance.shootWasReleased) {
                 //graple logic
+
             }
 
             __instance.shootWasPressed = false;
             __instance.shootIsPressed = false;
             __instance.shootWasReleased = false;
-
-            Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
-            Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
 
             if(___data.GetOverhaulData().dashTime > 0f) {
                 ___data.GetOverhaulData().dashTime -= TimeHandler.deltaTime;
@@ -61,7 +68,7 @@ namespace RCO.Patches
                 __instance.direction = Vector3.zero;
                 ___data.block.counter = 0f;
             } else {
-                ___data.GetOverhaulData().dashedSinceGrounded = !(!___data.GetOverhaulData().dashedSinceGrounded || ___data.isGrounded);
+                ___data.GetOverhaulData().dashedSinceGrounded = ___data.GetOverhaulData().dashedSinceGrounded || ___data.isGrounded;
             }
             ___data.GetComponent<Gravity>().enabled = ___data.GetOverhaulData().dashTime <= 0f;
 
@@ -71,7 +78,7 @@ namespace RCO.Patches
                 ___data.weaponHandler.gun.shootPosition.rotation = Quaternion.LookRotation(aim);
                 ___data.weaponHandler.InvokeMethod("Attack");
             }
-            if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f && __instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime)) {
+            if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f && !__instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime)) {
                 ___data.block.sinceBlock = 0f;
                 ___data.block.counter = 0f;
                 ___data.block.reloadParticle.Play(); 
@@ -81,7 +88,7 @@ namespace RCO.Patches
                 LoseControlHandler handler = ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                 ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.5f);
             }
-            if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && !___data.GetOverhaulData().dashedSinceGrounded) {
+            if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().dashedSinceGrounded) {
                 ___data.block.counter = 0f;
                 ___data.GetOverhaulData().dashTime = 0.15f;
                 ___data.GetOverhaulData().dashDirection = move.normalized;
