@@ -79,9 +79,19 @@ namespace RCO.Patches {
                     ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.75f);
 
                     //spawn vfx
+                    PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
+                    Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
+                    Color color2 = Traverse.Create(skinParticle).Field("startColor2").GetValue<Color>();
+
+                    Gradient gradient = new Gradient();
+                    GradientAlphaKey[] alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
+                    GradientColorKey[] colorKeys = new GradientColorKey[] { new GradientColorKey(color1, 0.0f), new GradientColorKey(color2, 1.0f) };
+                    gradient.SetKeys(colorKeys, alphaKeys);
+
                     GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
                     vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
                     vfxObject.transform.localPosition = Vector3.zero;
+                    vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
                     ropeVFX.targetLastPos = vfxObject.transform.position + (new Vector3(__instance.lastAimDirection.x, __instance.lastAimDirection.y, 0.0f).normalized * maxLangth);
@@ -118,12 +128,25 @@ namespace RCO.Patches {
                     }
 
                     //spawn vfx
+                    PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
+                    Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
+                    Color color2 = Traverse.Create(skinParticle).Field("startColor2").GetValue<Color>();
+
+                    Gradient gradient = new Gradient();
+                    GradientAlphaKey[] alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
+                    GradientColorKey[] colorKeys = new GradientColorKey[] { new GradientColorKey(color1, 0.0f), new GradientColorKey(color2, 1.0f) };
+                    gradient.SetKeys(colorKeys, alphaKeys);
+
                     GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
                     vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
                     vfxObject.transform.localPosition = Vector3.zero;
+                    vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
                     ropeVFX.targetObject = player.gameObject;
+                    ropeVFX.ropeSnapTime = 0.035f;
+                    ropeVFX.ropeOvershotTime = 0.035f;
+
 
                 } else { //Grapple Map Point
                     ___data.sinceGrounded = 0;
@@ -133,9 +156,19 @@ namespace RCO.Patches {
                     });
 
                     //spawn vfx
+                    PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
+                    Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
+                    Color color2 = Traverse.Create(skinParticle).Field("startColor2").GetValue<Color>();
+
+                    Gradient gradient = new Gradient();
+                    GradientAlphaKey[] alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
+                    GradientColorKey[] colorKeys = new GradientColorKey[] { new GradientColorKey(color1, 0.0f), new GradientColorKey(color2, 1.0f) };
+                    gradient.SetKeys(colorKeys, alphaKeys);
+
                     GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
                     vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
                     vfxObject.transform.localPosition = Vector3.zero;
+                    vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
                     ropeVFX.targetObject = hit.collider.gameObject;
