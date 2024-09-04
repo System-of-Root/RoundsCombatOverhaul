@@ -13,10 +13,13 @@ namespace RCO.Extensions
 
         //
 
+        public float dashTime;
+
         public CharacterData_OverhaulData()
         {
             isLostControl = false;
             loseControlTimer = 0f;
+            dashTime = 0f;
         }
     }
 

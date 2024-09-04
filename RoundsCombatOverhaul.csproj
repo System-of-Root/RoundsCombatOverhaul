@@ -25,12 +25,14 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DebugSymbols>true</DebugSymbols>
-		<DefineConstants>DEBUG</DefineConstants>
+	<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<DebugType>embedded</DebugType>
+		<PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
 		<Optimize>false</Optimize>
-		<OutputPath>bin\Debug\</OutputPath>
-		<DebugType>portable</DebugType>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <DefineConstants>DEBUG</DefineConstants>
+	  <OutputPath>bin\Debug\</OutputPath>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -44,6 +46,9 @@
 
 
 	<ItemGroup>
+		<Reference Include="InControl">
+		  <HintPath>F:\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\InControl.dll</HintPath>
+		</Reference>
 		<Reference Include="UnboundLib">
 			<HintPath>$(BepInFolder)\plugins\willis81808-UnboundLib\UnboundLib.dll</HintPath>
 		</Reference>

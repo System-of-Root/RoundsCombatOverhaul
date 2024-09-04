@@ -3,6 +3,8 @@ using UnityEngine;
 using UnboundLib;
 
 using RCO.Extensions;
+using RCO.MonoBehaviours;
+using Photon.Pun;
 
 // using GearUpCards.Extensions;
 
@@ -34,6 +36,38 @@ namespace RCO.Patches
             }
 
             return true;
+        }
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.First)]
+        [HarmonyPatch("Update")]
+        static void Update_Postfix(CharacterData ___data, GeneralInput __instance) {
+
+            if(__instance.shootWasPressed) {
+                //graple logic
+            }
+
+            __instance.shootWasPressed = false;
+            __instance.shootIsPressed = false;
+            __instance.shootWasReleased = false;
+
+            Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
+            Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
+            if(aim.magnitude > 0.5f) {
+                __instance.aimDirection = aim;
+                __instance.shootWasPressed = true;
+                ___data.weaponHandler.gun.shootPosition.rotation = Quaternion.LookRotation(aim);
+                ___data.weaponHandler.InvokeMethod("Attack");
+            }
+            if(___data.playerActions.Block.IsPressed && move.magnitude < 0.1f && __instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime)) {
+                ___data.block.sinceBlock = 0f;
+                ___data.block.counter = 0f;
+                ___data.block.reloadParticle.Play(); 
+                ___data.block.reloadParticle.time = 0f;
+            }
+            if(___data.block.reloadParticle.time > 0 && ___data.block.reloadParticle.isPlaying) {
+                LoseControlHandler handler = ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
+                ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.5f);
+            }
         }
 
 
