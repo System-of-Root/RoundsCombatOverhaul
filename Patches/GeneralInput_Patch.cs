@@ -69,12 +69,12 @@ namespace RCO.Patches {
                 ___data.GetOverhaulData().groundedSinceDash = ___data.isGrounded;
                 Unbound.Instance.ExecuteAfterSeconds(2, () => { ___data.GetOverhaulData().isGrappling = false; });
                 float maxLangth = MainCam.instance.cam.orthographicSize;
-                int layerMask = (1 << 11) | (1 << 10);
-                RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, aim, maxLangth, layerMask);
+                int layerMask = (1 << 0)| (1 << 11) | (1 << 10);
+                RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, __instance.lastAimDirection, maxLangth, layerMask); ;
                 if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
 
 
-                if(hit.collider == null) {  //Miss and get stunned
+                if(hit.collider == null || hit.collider.gameObject.layer == 0) {  //Miss and get stunned
                     ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                     ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.75f);
 
@@ -84,10 +84,12 @@ namespace RCO.Patches {
                     vfxObject.transform.localPosition = Vector3.zero;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
-                    ropeVFX.targetLastPos = vfxObject.transform.position + (new Vector3(aim.x, aim.y, 0.0f).normalized * maxLangth);
+                    ropeVFX.targetLastPos = vfxObject.transform.position + (new Vector3(__instance.lastAimDirection.x, __instance.lastAimDirection.y, 0.0f).normalized * maxLangth);
+                    if(hit.collider != null) ropeVFX.targetLastPos = hit.point;
 
                 } 
                 else if(hit.collider.GetComponent<Player>() != null) { //Grapple Player
+                    ___data.sinceGrounded = 0;
                     Player player = hit.collider.GetComponent<Player>();
                     player.data.GetOverhaulData().isGrappled = true;
                     if(move.magnitude < 0.1f) { //Nutral Stick, pull to player
@@ -124,6 +126,7 @@ namespace RCO.Patches {
                     ropeVFX.targetObject = player.gameObject;
 
                 } else { //Grapple Map Point
+                    ___data.sinceGrounded = 0;
                     Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                         Vector2 force = hit.collider.transform.position - __instance.transform.position;
                         ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
