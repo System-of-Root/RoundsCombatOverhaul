@@ -6,6 +6,8 @@ using RCO.Extensions;
 using RCO.MonoBehaviours;
 using Photon.Pun;
 using System;
+using RCO.VFX;
+using Photon.Realtime;
 
 // using GearUpCards.Extensions;
 
@@ -75,6 +77,15 @@ namespace RCO.Patches {
                 if(hit.collider == null) {  //Miss and get stunned
                     ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                     ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.75f);
+
+                    //spawn vfx
+                    GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
+                    vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
+                    vfxObject.transform.localPosition = Vector3.zero;
+
+                    GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
+                    ropeVFX.targetLastPos = vfxObject.transform.position + (new Vector3(aim.x, aim.y, 0.0f).normalized * maxLangth);
+
                 } 
                 else if(hit.collider.GetComponent<Player>() != null) { //Grapple Player
                     Player player = hit.collider.GetComponent<Player>();
@@ -103,11 +114,29 @@ namespace RCO.Patches {
                         });
 
                     }
+
+                    //spawn vfx
+                    GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
+                    vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
+                    vfxObject.transform.localPosition = Vector3.zero;
+
+                    GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
+                    ropeVFX.targetObject = player.gameObject;
+
                 } else { //Grapple Map Point
                     Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                         Vector2 force = hit.collider.transform.position - __instance.transform.position;
                         ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
                     });
+
+                    //spawn vfx
+                    GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
+                    vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
+                    vfxObject.transform.localPosition = Vector3.zero;
+
+                    GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
+                    ropeVFX.targetObject = hit.collider.gameObject;
+
                 }
 
 

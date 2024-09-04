@@ -21,7 +21,10 @@ namespace RCO {
 
         public const string ModId = "com.roots.rounds.RoundsCombatOverhaul", 
             ModName = "RoundsCombatOverhaul", 
-            Version = "0.0.7";
+            Version = "0.0.8";
+
+        public static readonly AssetBundle RCOAsset = Jotunn.Utils.AssetUtils.LoadAssetBundleFromResources("rco_asset", typeof(Main).Assembly);
+        public static GameObject GrapplingRopePrefab = RCOAsset.LoadAsset<GameObject>("GrapplingSource");
 
         void Awake() {
             var harmony = new Harmony(ModId);

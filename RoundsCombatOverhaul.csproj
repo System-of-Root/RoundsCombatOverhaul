@@ -45,10 +45,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="AssetsEmbedded\rco_asset" />
 	  <None Remove="AssetsEmbedded\rco_maps" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <EmbeddedResource Include="AssetsEmbedded\rco_asset" />
 	  <EmbeddedResource Include="AssetsEmbedded\rco_maps" />
 	</ItemGroup>
 
