@@ -44,6 +44,14 @@
 		<LangVersion>7.1</LangVersion>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <None Remove="AssetsEmbedded\rco_maps" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="AssetsEmbedded\rco_maps" />
+	</ItemGroup>
+
 
 	<ItemGroup>
 		<Reference Include="InControl">

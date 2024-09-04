@@ -46,14 +46,27 @@ namespace RCO.Patches
             Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
             Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
 
-            if(__instance.shootIsPressed) {
+            if(__instance.shootIsPressed && !__instance.shootWasReleased) {
                 __instance.ResetInput();
                 __instance.aimDirection = aim;
                 return;
             }
 
             if(__instance.shootWasReleased) {
-                //graple logic
+                float maxLangth = MainCam.instance.cam.orthographicSize;
+                int layerMask = (1 << 11) | (1 << 10);
+                RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position,aim,maxLangth, layerMask);
+                if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
+                if(hit.collider == null) {
+                    //stunshit
+                }else if (hit.collider.GetComponent<HealthHandler>() != null) { /*graple logic*/ }else
+                    { 
+                    Unbound.Instance.ExecuteAfterSeconds(0.1f,()=>{
+                        Vector2 force = hit.collider.transform.position - __instance.transform.position;
+                        ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
+                    });
+                }
+                
 
             }
 

@@ -4,6 +4,7 @@ using RCO.Dev;
 using RCO.MonoBehaviours;
 using UnboundLib;
 using UnboundLib.Cards;
+using UnboundLib.Utils;
 using UnityEngine;
 
 namespace RCO {
@@ -26,6 +27,7 @@ namespace RCO {
         }
 
         void Start() {
+            LevelManager.RegisterMaps(Jotunn.Utils.AssetUtils.LoadAssetBundleFromResources("rco_maps", typeof(Main).Assembly), "RCO");
             playerMonitor = new GameObject("[RCO] PlayerMonitor");
             playerMonitor.AddComponent<LoseControlMonitor>();
             DontDestroyOnLoad(playerMonitor);
@@ -55,7 +57,7 @@ namespace RCO {
             });
             
             // dev card, DO NOT INCLUDE IN FINAL BUILD!
-            CustomCard.BuildCard<LoseControlDevCard>();
+            //CustomCard.BuildCard<LoseControlDevCard>();
         }
 
         void Update(){
