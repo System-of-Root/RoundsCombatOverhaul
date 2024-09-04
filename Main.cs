@@ -2,6 +2,8 @@
 using HarmonyLib;
 using RCO.Dev;
 using RCO.MonoBehaviours;
+using System.Collections.Generic;
+using System.Linq;
 using UnboundLib;
 using UnboundLib.Cards;
 using UnboundLib.Utils;
@@ -31,6 +33,13 @@ namespace RCO {
             playerMonitor = new GameObject("[RCO] PlayerMonitor");
             playerMonitor.AddComponent<LoseControlMonitor>();
             DontDestroyOnLoad(playerMonitor);
+
+            this.ExecuteAfterFrames(5, () => {
+                List<string> categories = (List<string>)typeof(LevelManager)
+                .GetField("categories", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
+                .GetValue(null);
+                categories.ForEach(c => { if(c != "RCO") LevelManager.DisableCategory(c); });
+            });
 
             this.ExecuteAfterFrames(95, () =>
             {

@@ -11,6 +11,7 @@ namespace RCO.Patches {
     [HarmonyPatch(typeof(PlayerActions),"CreateWithControllerBindings")]
     public class PlayerActionsPatch {
 
+        // rebind controls as layed out in the document
         public static bool Prefix(ref PlayerActions __result) {
             PlayerActions playerActions = new PlayerActions();
             playerActions.Fire.AddDefaultBinding(InputControlType.RightTrigger);

@@ -11,6 +11,8 @@ namespace RCO.Patches {
     [HarmonyPatch]
     public class BulletsPassThroughTeam {
 
+
+        //also makes bullets pass through you while dashing
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ProjectileHit), nameof(ProjectileHit.Hit))]
         public static bool ProjectileHitPrefixHit(HitInfo hit, ProjectileHit __instance) {

@@ -35,6 +35,8 @@ namespace RCO.Patches {
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch("Update")]
         static void Update_Postfix(CharacterData ___data, GeneralInput __instance) {
+
+            //Handle Dash Movement
             if(___data.GetOverhaulData().dashTime > 0f) {
                 ___data.GetOverhaulData().dashTime -= TimeHandler.deltaTime;
                 ___data.sinceGrounded = 0;
@@ -45,18 +47,22 @@ namespace RCO.Patches {
                 ___data.GetOverhaulData().groundedSinceDash = ___data.GetOverhaulData().groundedSinceDash || ___data.isGrounded;
             }
 
+            //Diable Gavity for dash and when grappled
             ___data.GetComponent<Gravity>().enabled = ___data.GetOverhaulData().dashTime <= 0f && !___data.GetOverhaulData().isGrappled;
 
             Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
             Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
 
+
+            //Start grapple action
             if(__instance.shootIsPressed && !__instance.shootWasReleased && ___data.GetOverhaulData().groundedSinceGrapple) {
                 __instance.ResetInput();
                 __instance.aimDirection = aim;
                 ___data.GetOverhaulData().isGrappling = true;
                 return;
             }
-
+            
+            //preform grapple
             if(__instance.shootWasReleased && ___data.GetOverhaulData().groundedSinceGrapple) {
                 ___data.GetOverhaulData().groundedSinceDash = ___data.isGrounded;
                 Unbound.Instance.ExecuteAfterSeconds(2, () => { ___data.GetOverhaulData().isGrappling = false; });
@@ -64,13 +70,16 @@ namespace RCO.Patches {
                 int layerMask = (1 << 11) | (1 << 10);
                 RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, aim, maxLangth, layerMask);
                 if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
-                if(hit.collider == null) {
+
+
+                if(hit.collider == null) {  //Miss and get stunned
                     ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                     ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.75f);
-                } else if(hit.collider.GetComponent<Player>() != null) {
+                } 
+                else if(hit.collider.GetComponent<Player>() != null) { //Grapple Player
                     Player player = hit.collider.GetComponent<Player>();
                     player.data.GetOverhaulData().isGrappled = true;
-                    if(move.magnitude < 0.1f) {
+                    if(move.magnitude < 0.1f) { //Nutral Stick, pull to player
                         Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                             Vector2 force = hit.collider.transform.position - __instance.transform.position;
                             ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
@@ -80,7 +89,7 @@ namespace RCO.Patches {
                             player.gameObject.GetOrAddComponent<LoseControlHandler>();
                             player.data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.1f);
                         });
-                    } else {
+                    } else {//Directional Stick, pull player in and then throw
                         Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                             Vector2 force = __instance.transform.position - hit.collider.transform.position;
                             player.data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
@@ -94,7 +103,7 @@ namespace RCO.Patches {
                         });
 
                     }
-                } else {
+                } else { //Grapple Map Point
                     Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                         Vector2 force = hit.collider.transform.position - __instance.transform.position;
                         ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
@@ -106,19 +115,23 @@ namespace RCO.Patches {
                 ___data.GetOverhaulData().groundedSinceGrapple = ___data.GetOverhaulData().groundedSinceGrapple || ___data.isGrounded;
             }
 
-            if(__instance.jumpWasPressed) ___data.GetOverhaulData().isGrappling = false;
+            if(__instance.jumpWasPressed) ___data.GetOverhaulData().isGrappling = false; //exit grapple early
 
+
+            //reset gun data used for grapple so the player doesnt fire
             __instance.shootWasPressed = false;
             __instance.shootIsPressed = false;
             __instance.shootWasReleased = false;
 
-
+            //shoot with aim stick if not grapled
             if(aim.magnitude > 0.6f && !___data.GetOverhaulData().isGrappling) {
                 __instance.aimDirection = aim;
                 __instance.shootWasPressed = true;
                 ___data.weaponHandler.gun.shootPosition.rotation = Quaternion.LookRotation(aim);
                 ___data.weaponHandler.InvokeMethod("Attack");
             }
+
+            //hold block if stationary
             if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f &&
                 !__instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime
                 && !___data.GetOverhaulData().isGrappling)) {
@@ -127,10 +140,14 @@ namespace RCO.Patches {
                 ___data.block.reloadParticle.Play();
                 ___data.block.reloadParticle.time = 0f;
             }
+
+            //stunn player when they stop blocking
             if(___data.block.reloadParticle.time > 0 && ___data.block.reloadParticle.isPlaying) {
                 ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                 ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.5f);
             }
+
+            //start dash if blocking while moving.
             if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().groundedSinceDash) {
                 ___data.block.counter = 0f;
                 ___data.GetOverhaulData().dashTime = 0.1f;
