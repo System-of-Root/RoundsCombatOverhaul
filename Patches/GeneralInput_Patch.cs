@@ -9,27 +9,20 @@ using System;
 
 // using GearUpCards.Extensions;
 
-namespace RCO.Patches
-{
+namespace RCO.Patches {
     [HarmonyPatch(typeof(GeneralInput))]
-    class GeneralInput_Patch
-    {
+    class GeneralInput_Patch {
         [HarmonyPrefix]
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch("Update")]
-        static bool Update_Prefix(CharacterData ___data, GeneralInput __instance)
-        {
-            if (___data.GetOverhaulData().isLostControl)
-            {
-                try
-                {
+        static bool Update_Prefix(CharacterData ___data, GeneralInput __instance) {
+            if(___data.GetOverhaulData().isLostControl) {
+                try {
                     __instance.ResetInput();
                     // UnityEngine.Debug.LogWarning("GeneralInput::ResetInput()");
                     __instance.InvokeMethod("DoUIInput");
                     // UnityEngine.Debug.LogWarning("GeneralInput::DoUIInput()");
-                }
-                catch (System.Exception e)
-                {
+                } catch(System.Exception e) {
                     UnityEngine.Debug.LogWarning("GeneralInput::Update_Prefix : ResetInput failed");
                     UnityEngine.Debug.LogWarning($"{e.Message}");
                 }
@@ -42,6 +35,17 @@ namespace RCO.Patches
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch("Update")]
         static void Update_Postfix(CharacterData ___data, GeneralInput __instance) {
+            if(___data.GetOverhaulData().dashTime > 0f) {
+                ___data.GetOverhaulData().dashTime -= TimeHandler.deltaTime;
+                ___data.sinceGrounded = 0;
+                ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, ___data.GetOverhaulData().dashDirection * TimeHandler.deltaTime * 6600000, ForceMode2D.Force);
+                __instance.direction = Vector3.zero;
+                ___data.block.counter = 0f;
+            } else {
+                ___data.GetOverhaulData().dashedSinceGrounded = ___data.GetOverhaulData().dashedSinceGrounded || ___data.isGrounded;
+            }
+
+            ___data.GetComponent<Gravity>().enabled = ___data.GetOverhaulData().dashTime <= 0f && !___data.GetOverhaulData().isGrappled;
 
             Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
             Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
@@ -55,18 +59,45 @@ namespace RCO.Patches
             if(__instance.shootWasReleased) {
                 float maxLangth = MainCam.instance.cam.orthographicSize;
                 int layerMask = (1 << 11) | (1 << 10);
-                RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position,aim,maxLangth, layerMask);
+                RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, aim, maxLangth, layerMask);
                 if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
                 if(hit.collider == null) {
-                    //stunshit
-                }else if (hit.collider.GetComponent<HealthHandler>() != null) { /*graple logic*/ }else
-                    { 
-                    Unbound.Instance.ExecuteAfterSeconds(0.1f,()=>{
+                    ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
+                    ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.75f);
+                } else if(hit.collider.GetComponent<Player>() != null) {
+                    Player player = hit.collider.GetComponent<Player>();
+                    player.data.GetOverhaulData().isGrappled = true;
+                    if(move.magnitude < 0.1f) {
+                        Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
+                            Vector2 force = hit.collider.transform.position - __instance.transform.position;
+                            ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
+                        });
+                        Unbound.Instance.ExecuteAfterSeconds(0.17f, () => {
+                            player.data.GetOverhaulData().isGrappled = false;
+                            player.gameObject.GetOrAddComponent<LoseControlHandler>();
+                            player.data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.1f);
+                        });
+                    } else {
+                        Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
+                            Vector2 force = __instance.transform.position - hit.collider.transform.position;
+                            player.data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
+                        });
+
+                        Unbound.Instance.ExecuteAfterSeconds(0.17f, () => {
+                            player.data.GetOverhaulData().isGrappled = false;
+                            player.gameObject.GetOrAddComponent<LoseControlHandler>();
+                            player.data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.4f);
+                            player.data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, move.normalized * 30000, ForceMode2D.Impulse);
+                        });
+
+                    }
+                } else {
+                    Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                         Vector2 force = hit.collider.transform.position - __instance.transform.position;
                         ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
                     });
                 }
-                
+
 
             }
 
@@ -74,16 +105,6 @@ namespace RCO.Patches
             __instance.shootIsPressed = false;
             __instance.shootWasReleased = false;
 
-            if(___data.GetOverhaulData().dashTime > 0f) {
-                ___data.GetOverhaulData().dashTime -= TimeHandler.deltaTime;
-                ___data.sinceGrounded = 0;
-                ___data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, ___data.GetOverhaulData().dashDirection * TimeHandler.deltaTime * 4400000, ForceMode2D.Force);
-                __instance.direction = Vector3.zero;
-                ___data.block.counter = 0f;
-            } else {
-                ___data.GetOverhaulData().dashedSinceGrounded = ___data.GetOverhaulData().dashedSinceGrounded || ___data.isGrounded;
-            }
-            ___data.GetComponent<Gravity>().enabled = ___data.GetOverhaulData().dashTime <= 0f;
 
             if(aim.magnitude > 0.6f) {
                 __instance.aimDirection = aim;
@@ -94,18 +115,18 @@ namespace RCO.Patches
             if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f && !__instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime)) {
                 ___data.block.sinceBlock = 0f;
                 ___data.block.counter = 0f;
-                ___data.block.reloadParticle.Play(); 
+                ___data.block.reloadParticle.Play();
                 ___data.block.reloadParticle.time = 0f;
             }
             if(___data.block.reloadParticle.time > 0 && ___data.block.reloadParticle.isPlaying) {
-                LoseControlHandler handler = ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
+                ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
                 ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.5f);
             }
             if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().dashedSinceGrounded) {
                 ___data.block.counter = 0f;
-                ___data.GetOverhaulData().dashTime = 0.15f;
+                ___data.GetOverhaulData().dashTime = 0.1f;
                 ___data.GetOverhaulData().dashDirection = move.normalized;
-                ___data.GetOverhaulData().dashedSinceGrounded = false;
+                ___data.GetOverhaulData().dashedSinceGrounded = ___data.isGrounded;
             }
         }
 

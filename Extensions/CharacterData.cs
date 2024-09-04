@@ -18,12 +18,16 @@ namespace RCO.Extensions
         public Vector2 dashDirection;
         public bool dashedSinceGrounded;
 
+        public bool isGrappled;
+        public float grappledTime;
+
         public CharacterData_OverhaulData()
         {
             isLostControl = false;
             loseControlTimer = 0f;
             dashTime = 0f;
             dashedSinceGrounded = false;
+            isGrappled = false;
         }
     }
 
