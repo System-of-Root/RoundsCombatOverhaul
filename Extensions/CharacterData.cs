@@ -12,8 +12,15 @@ namespace RCO.Extensions
         public bool isLostControl;
         public float loseControlTimer;
 
-        //
+        // [Disarmed] status
+        public bool isDisarmed;
+        public float disarmedTimer;
 
+        // [Immobile] status
+        public bool isImmobile;
+        public float immobileTimer;
+
+        // variables for Dashing and Grappling
         public float dashTime;
         public Vector2 dashDirection;
         public bool groundedSinceDash;
@@ -26,8 +33,16 @@ namespace RCO.Extensions
         {
             isLostControl = false;
             loseControlTimer = 0f;
+
+            isDisarmed = false;
+            disarmedTimer = 0f;
+
+            isImmobile = false;
+            immobileTimer = 0f;
+
             dashTime = 0f;
             groundedSinceDash = true;
+
             isGrappled = false;
             isGrappling = false;
             groundedSinceGrapple = true;

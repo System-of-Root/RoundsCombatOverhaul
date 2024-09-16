@@ -21,9 +21,7 @@ namespace RCO.Patches {
             if(___data.GetOverhaulData().isLostControl) {
                 try {
                     __instance.ResetInput();
-                    // UnityEngine.Debug.LogWarning("GeneralInput::ResetInput()");
                     __instance.InvokeMethod("DoUIInput");
-                    // UnityEngine.Debug.LogWarning("GeneralInput::DoUIInput()");
                 } catch(System.Exception e) {
                     UnityEngine.Debug.LogWarning("GeneralInput::Update_Prefix : ResetInput failed");
                     UnityEngine.Debug.LogWarning($"{e.Message}");
@@ -37,6 +35,21 @@ namespace RCO.Patches {
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch("Update")]
         static void Update_Postfix(CharacterData ___data, GeneralInput __instance) {
+            //Handle control-related status effects
+            if (___data.GetOverhaulData().isImmobile)
+            {
+                __instance.direction = Vector3.zero;
+
+                __instance.jumpIsPressed = false;
+                __instance.jumpWasPressed = false;
+            }
+
+            if (___data.GetOverhaulData().isDisarmed)
+            {
+                __instance.shootIsPressed = false;
+                __instance.shootWasPressed = false;
+                __instance.shootWasReleased = false;
+            }
 
             //Handle Dash Movement
             if(___data.GetOverhaulData().dashTime > 0f) {
@@ -75,14 +88,24 @@ namespace RCO.Patches {
                 if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
 
 
-                if(hit.collider == null || hit.collider.gameObject.layer == 0) {  //Miss and get stunned
+                if(hit.collider == null || hit.collider.gameObject.layer == 0) {  //Miss and get [Disarmed]
                     ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
-                    ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.75f);
+                    ___data.view.RPC("RPCA_AddDisarmed", RpcTarget.All, 0.75f);
 
                     //spawn vfx
+                    PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
+                    Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
+                    Color color2 = Traverse.Create(skinParticle).Field("startColor2").GetValue<Color>();
+
+                    Gradient gradient = new Gradient();
+                    GradientAlphaKey[] alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
+                    GradientColorKey[] colorKeys = new GradientColorKey[] { new GradientColorKey(color1, 0.0f), new GradientColorKey(color2, 1.0f) };
+                    gradient.SetKeys(colorKeys, alphaKeys);
+
                     GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
                     vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
                     vfxObject.transform.localPosition = Vector3.zero;
+                    vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
                     ropeVFX.targetLastPos = vfxObject.transform.position + (new Vector3(__instance.lastAimDirection.x, __instance.lastAimDirection.y, 0.0f).normalized * maxLangth);
@@ -119,12 +142,24 @@ namespace RCO.Patches {
                     }
 
                     //spawn vfx
+                    PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
+                    Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
+                    Color color2 = Traverse.Create(skinParticle).Field("startColor2").GetValue<Color>();
+
+                    Gradient gradient = new Gradient();
+                    GradientAlphaKey[] alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
+                    GradientColorKey[] colorKeys = new GradientColorKey[] { new GradientColorKey(color1, 0.0f), new GradientColorKey(color2, 1.0f) };
+                    gradient.SetKeys(colorKeys, alphaKeys);
+
                     GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
                     vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
                     vfxObject.transform.localPosition = Vector3.zero;
+                    vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
                     ropeVFX.targetObject = player.gameObject;
+                    ropeVFX.ropeSnapTime = 0.035f;
+                    ropeVFX.ropeOvershotTime = 0.035f;
 
                 } else { //Grapple Map Point
                     ___data.sinceGrounded = 0.05f;
@@ -134,9 +169,19 @@ namespace RCO.Patches {
                     });
 
                     //spawn vfx
+                    PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
+                    Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
+                    Color color2 = Traverse.Create(skinParticle).Field("startColor2").GetValue<Color>();
+
+                    Gradient gradient = new Gradient();
+                    GradientAlphaKey[] alphaKeys = new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) };
+                    GradientColorKey[] colorKeys = new GradientColorKey[] { new GradientColorKey(color1, 0.0f), new GradientColorKey(color2, 1.0f) };
+                    gradient.SetKeys(colorKeys, alphaKeys);
+                    
                     GameObject vfxObject = GameObject.Instantiate(Main.GrapplingRopePrefab);
                     vfxObject.transform.parent = ___data.weaponHandler.gun.transform;
                     vfxObject.transform.localPosition = Vector3.zero;
+                    vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
                     ropeVFX.targetObject = hit.collider.gameObject;
@@ -156,8 +201,8 @@ namespace RCO.Patches {
             __instance.shootIsPressed = false;
             __instance.shootWasReleased = false;
 
-            //shoot with aim stick if not grapled
-            if(aim.magnitude > 0.6f && !___data.GetOverhaulData().isGrappling) {
+            //shoot with aim stick if not grapled and not [Disarmed]
+            if(aim.magnitude > 0.6f && !___data.GetOverhaulData().isGrappling && !___data.GetOverhaulData().isDisarmed) {
                 __instance.aimDirection = aim;
                 __instance.shootWasPressed = true;
                 ___data.weaponHandler.gun.shootPosition.rotation = Quaternion.LookRotation(aim);
@@ -174,14 +219,14 @@ namespace RCO.Patches {
                 ___data.block.reloadParticle.time = 0f;
             }
 
-            //stunn player when they stop blocking
+            //disarm player when they stop blocking
             if(___data.block.reloadParticle.time > 0 && ___data.block.reloadParticle.isPlaying) {
                 ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
-                ___data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.5f);
+                ___data.view.RPC("RPCA_AddDisarmed", RpcTarget.All, 0.5f);
             }
 
-            //start dash if blocking while moving.
-            if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().groundedSinceDash) {
+            //start dash if blocking while moving and not [Immobile]'d.
+            if(___data.playerActions.Block.IsPressed && move.magnitude > 0.1f && !___data.block.IsOnCD() && ___data.GetOverhaulData().groundedSinceDash && !___data.GetOverhaulData().isImmobile) {
                 ___data.block.counter = 0f;
                 ___data.GetOverhaulData().dashTime = 0.1f;
                 ___data.GetOverhaulData().dashDirection = move.normalized;
