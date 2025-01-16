@@ -53,8 +53,8 @@ namespace RCO.VFX
         private Vector3 ropeWaveVector;
 
         // debug vars
-        public bool resetState = false;
-        public bool nextState = false;
+        // public bool resetState = false;
+        // public bool nextState = false;
 
 
         void Start()

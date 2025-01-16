@@ -1,5 +1,6 @@
 using Photon.Pun;
 using RCO.Extensions;
+using RCO.VFX;
 using UnboundLib;
 using UnityEngine;
 
@@ -15,6 +16,9 @@ namespace RCO.MonoBehaviours
         private CharacterStatModifiers stats;
 
         private StunHandler stunHandler;
+
+        public SimpleStatusVFX LoseControlVFX = null;
+        public SimpleStatusVFX DisarmedVFX = null;
 
         private void Start()
         {
@@ -72,13 +76,13 @@ namespace RCO.MonoBehaviours
         // status effect methods
         private void StartLoseControl()
         {
-            // - placeholder for animation starter - 
+            LoseControlVFX.visible = true;
 
             data.GetOverhaulData().isLostControl = true;
         }
         public void StopLoseControl()
         {
-            // - placeholder for animation stopper - 
+            LoseControlVFX.visible = false;
 
             data.GetOverhaulData().isLostControl = false;
             data.GetOverhaulData().loseControlTimer = 0f;
@@ -86,13 +90,13 @@ namespace RCO.MonoBehaviours
 
         private void StartDisarmed()
         {
-            // - placeholder for animation starter - 
+            DisarmedVFX.visible = true;
 
             data.GetOverhaulData().isDisarmed = true;
         }
         public void StopDisarmed()
         {
-            // - placeholder for animation stopper - 
+            DisarmedVFX.visible = false;
 
             data.GetOverhaulData().isDisarmed = false;
             data.GetOverhaulData().disarmedTimer = 0f;
@@ -159,6 +163,38 @@ namespace RCO.MonoBehaviours
             if (!data.GetOverhaulData().isImmobile)
             {
                 StartImmobile();
+            }
+        }
+
+        [PunRPC]
+        public void RPCA_SetImmobile(float time)
+        {
+            data.GetOverhaulData().immobileTimer = time;
+
+            if (!data.GetOverhaulData().isImmobile && time > 0.0f)
+            {
+                StartImmobile();
+            }
+            else if (time <= 0.0f)
+            {
+                data.GetOverhaulData().immobileTimer = 0.0f;
+                StopImmobile();
+            }
+        }
+
+        [PunRPC]
+        public void RPCA_SetDisarm(float time)
+        {
+            data.GetOverhaulData().disarmedTimer = time;
+
+            if (!data.GetOverhaulData().isDisarmed && time > 0.0f)
+            {
+                StartDisarmed();
+            }
+            else if (time <= 0.0f)
+            {
+                data.GetOverhaulData().disarmedTimer = 0.0f;
+                StopDisarmed();
             }
         }
 

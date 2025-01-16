@@ -5,10 +5,9 @@ using RCO.MonoBehaviours;
 using RCO.VFX;
 using System;
 using System.Collections;
+using System.Runtime.Remoting.Messaging;
 using UnboundLib;
 using UnityEngine;
-
-// using GearUpCards.Extensions;
 
 namespace RCO.Patches {
     [HarmonyPatch(typeof(GeneralInput))]
@@ -75,6 +74,15 @@ namespace RCO.Patches {
             //Diable Gavity for dash and when grappled
             ___data.GetComponent<Gravity>().enabled = ___data.GetOverhaulData().dashTime <= 0f && !___data.GetOverhaulData().isGrappled;
 
+            if(___data.GetOverhaulData().isThrowing) {
+                ___data.GetComponent<PlayerVelocity>().enabled = false;
+                ___data.GetComponent<Gravity>().enabled = false;
+            }
+            else {
+                ___data.GetComponent<PlayerVelocity>().enabled = true;
+                ___data.GetComponent<Gravity>().enabled = true;
+            }
+
             Vector2 aim = new Vector2(___data.playerActions.Aim.X, ___data.playerActions.Aim.Y);
             Vector2 move = new Vector2(___data.playerActions.Move.X, ___data.playerActions.Move.Y);
 
@@ -83,14 +91,16 @@ namespace RCO.Patches {
             if(grapleWasPressed && ___data.GetOverhaulData().groundedSinceGrapple && !___data.GetOverhaulData().isGrappling) {
                 __instance.ResetInput();
                 __instance.aimDirection = aim;
-                ___data.GetOverhaulData().isGrappling = true;
+                // ___data.GetOverhaulData().isGrappling = true;
                 return;
             }
             
             //preform grapple
-            if(grapleWasReleased && ___data.GetOverhaulData().groundedSinceGrapple) {
+            if(grapleWasReleased && ___data.GetOverhaulData().groundedSinceGrapple && !___data.GetOverhaulData().isGrappling) {
+                ___data.GetOverhaulData().isGrappling = true;
                 ___data.GetOverhaulData().groundedSinceGrapple = ___data.isGrounded;___data.isGrounded = false;
                 Unbound.Instance.ExecuteAfterSeconds(1.5f, () => { ___data.GetOverhaulData().isGrappling = false; });
+
                 float maxLangth = MainCam.instance.cam.orthographicSize;
                 int layerMask = (1 << 0)| (1 << 11) | (1 << 10);
                 RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, __instance.lastAimDirection, maxLangth, layerMask); ;
@@ -99,8 +109,10 @@ namespace RCO.Patches {
 
                 if(hit.collider == null || hit.collider.gameObject.layer == 0) {  //Miss and get [Disarmed]
                     ___data.player.gameObject.GetOrAddComponent<LoseControlHandler>();
-                    ___data.view.RPC("RPCA_AddDisarmed", RpcTarget.All, 0.75f);
-
+                    Unbound.Instance.ExecuteAfterSeconds(0.2f, () => {
+                        ___data.view.RPC("RPCA_AddDisarmed", RpcTarget.All, 0.8f);
+                    });
+                    
                     //spawn vfx
                     PlayerSkinParticle skinParticle = ___data.gameObject.GetComponentInChildren<PlayerSkinParticle>();
                     Color color1 = Traverse.Create(skinParticle).Field("startColor1").GetValue<Color>();
@@ -122,17 +134,29 @@ namespace RCO.Patches {
 
                 } 
                 else if(hit.collider.GetComponent<Player>() != null) { //Grapple Player
+                    Unbound.Instance.ExecuteAfterSeconds(1.1f, () => { ___data.GetOverhaulData().isThrowing = false; });
+
                     ___data.sinceGrounded = 0.05f;
-                    Player player = hit.collider.GetComponent<Player>();
-                    player.data.GetOverhaulData().isGrappled = true;
+                    Player targetPlayer = hit.collider.GetComponent<Player>();
                     {//pull player in and then throw
                         Unbound.Instance.ExecuteAfterSeconds(0.1f, () => {
                             Vector2 force = __instance.transform.position - hit.collider.transform.position;
-                            player.data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
+                            targetPlayer.data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, force * 2750, ForceMode2D.Impulse);
+                            targetPlayer.data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.1f);
                         });
 
-                        Unbound.Instance.StartCoroutine(DoGrapple(___data.player, player));
+                        // lock down players
+                        Unbound.Instance.ExecuteAfterSeconds(0.175f, () => {
+                            targetPlayer.data.view.RPC("RPCA_SetStun", RpcTarget.All, 0.825f);
+                            targetPlayer.data.GetOverhaulData().isGrappled = true;
 
+                            ___data.view.RPC("RPCA_SetImmobile", RpcTarget.All, 0.825f);
+                            ___data.view.RPC("RPCA_SetDisarm", RpcTarget.All, 0.825f);
+                            ___data.GetOverhaulData().isThrowing = true;
+                        });
+
+                        // throw coroutine
+                        Unbound.Instance.StartCoroutine(DoGrapple(___data.player, targetPlayer));
 
                     }
 
@@ -152,7 +176,7 @@ namespace RCO.Patches {
                     vfxObject.GetComponent<LineRenderer>().colorGradient = gradient;
 
                     GrapplingRopeVFX ropeVFX = vfxObject.AddComponent<GrapplingRopeVFX>();
-                    ropeVFX.targetObject = player.gameObject;
+                    ropeVFX.targetObject = targetPlayer.gameObject;
                     ropeVFX.ropeSnapTime = 0.035f;
                     ropeVFX.ropeOvershotTime = 0.035f;
 
@@ -197,7 +221,13 @@ namespace RCO.Patches {
                 __instance.shootWasReleased = false;
 
                 //shoot with aim stick if not grapled and not [Disarmed]
-                if(aim.magnitude > 0.6f && !___data.GetOverhaulData().isGrappling && !___data.GetOverhaulData().isDisarmed) {
+                bool canShootCheck = !___data.GetOverhaulData().isGrappling &&
+                                     !___data.GetOverhaulData().isDisarmed &&
+                                     !___data.GetOverhaulData().isLostControl &&
+                                     !___data.isStunned &&
+                                     !___data.isSilenced;
+
+                if(aim.magnitude > 0.6f && canShootCheck) {
                     __instance.aimDirection = aim;
                     __instance.shootWasPressed = true;
                     ___data.weaponHandler.gun.shootPosition.rotation = Quaternion.LookRotation(aim);
@@ -205,7 +235,7 @@ namespace RCO.Patches {
                 }
             }
 
-            //hold block if stationary
+            //hold block if stationary, disable gun
             if(___data.isGrounded && ___data.playerActions.Block.IsPressed && move.magnitude < 0.1f &&
                 !__instance.jumpIsPressed && (!___data.block.IsOnCD() || ___data.block.counter <= TimeHandler.deltaTime
                 && !___data.GetOverhaulData().isGrappling)) {
@@ -213,6 +243,7 @@ namespace RCO.Patches {
                 ___data.block.counter = 0f;
                 ___data.block.reloadParticle.Play();
                 ___data.block.reloadParticle.time = 0f;
+                ___data.view.RPC("RPCA_AddDisarmed", RpcTarget.All, 0.5f);
             }
 
             //disarm player when they stop blocking
@@ -232,22 +263,39 @@ namespace RCO.Patches {
         }
 
         public static IEnumerator DoGrapple(Player Holder, Player Gappled) {
+            // holding on enemy player and throwing
             float time = 0;
             do {
                 yield return null;
-                time += Time.deltaTime;
-                if(Holder.data.GetOverhaulData().grapleWasPressed) {
+                time += TimeHandler.deltaTime;
+                if(Holder.data.GetOverhaulData().grapleWasPressed && time > 0.2f) {
+                    // throwing enemy player
                     Vector2 move = Holder.data.input.inputType == GeneralInput.InputType.Controller ? new Vector2(Holder.data.playerActions.Move.X, Holder.data.playerActions.Move.Y) 
                         : (Vector2)Holder.data.input.lastAimDirection;
+
+                    // player states -- getting thrown
                     Gappled.data.GetOverhaulData().isGrappled = false;
+
                     Gappled.gameObject.GetOrAddComponent<LoseControlHandler>();
+
+                    // status effects
+                    Gappled.data.view.RPC("RPCA_SetStun", RpcTarget.All, 0.0f);
                     Gappled.data.view.RPC("RPCA_AddLoseControl", RpcTarget.All, 0.4f);
+
+                    Holder.data.view.RPC("RPCA_SetImmobile", RpcTarget.All, 0.0f);
+                    Holder.data.view.RPC("RPCA_SetDisarm", RpcTarget.All, 0.05f);
+                    Holder.data.GetOverhaulData().isThrowing = false;
+
                     Gappled.data.playerVel.InvokeMethod("AddForce", new Type[] { typeof(Vector2), typeof(ForceMode2D) }, move.normalized * 30000, ForceMode2D.Impulse);
                     yield break;
                 }
 
             } while(time <= 1|| !Holder.data.GetOverhaulData().isGrappling);
+
+            // player states -- not-throwing
             Gappled.data.GetOverhaulData().isGrappled = false;
+            Holder.data.GetOverhaulData().isThrowing = false;
+
             yield break;
         }
 

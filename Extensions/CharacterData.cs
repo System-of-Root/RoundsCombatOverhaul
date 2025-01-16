@@ -34,6 +34,7 @@ namespace RCO.Extensions {
             } }
         public bool isGrappling;
         public bool groundedSinceGrapple;
+        public bool isThrowing;
 
         public CharacterData_OverhaulData()
         {
@@ -52,6 +53,7 @@ namespace RCO.Extensions {
             isGrappled = false;
             isGrappling = false;
             groundedSinceGrapple = true;
+            isThrowing = false;
         }
     }
 
