@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using HarmonyLib;
 using UnityEngine;
 
-namespace RCO.Extensions
-{
-    public class CharacterData_OverhaulData
+namespace RCO.Extensions {
+    public class CharacterData_OverhaulData 
     {
+        internal CharacterData data;
         // [Lose Control] status
         public bool isLostControl;
         public float loseControlTimer;
@@ -24,8 +22,16 @@ namespace RCO.Extensions
         public float dashTime;
         public Vector2 dashDirection;
         public bool groundedSinceDash;
+        private bool _isGrappled = false;
 
-        public bool isGrappled;
+        public bool grapleWasPressed = false;
+        public bool grapleWasReleased = false;
+        public bool isGrappled { get { return _isGrappled; } set { 
+            if( _isGrappled != value ) {
+                    data.transform.localScale *= -1;
+                    _isGrappled = value;
+                }
+            } }
         public bool isGrappling;
         public bool groundedSinceGrapple;
 
@@ -56,7 +62,9 @@ namespace RCO.Extensions
 
         public static CharacterData_OverhaulData GetOverhaulData(this CharacterData characterStat)
         {
-            return data.GetOrCreateValue(characterStat);
+            var OverhaulData = data.GetOrCreateValue(characterStat);
+            OverhaulData.data = characterStat;
+            return OverhaulData;
         }
 
         public static void AddData(this CharacterData characterData, CharacterData_OverhaulData value)

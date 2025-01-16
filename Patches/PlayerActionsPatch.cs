@@ -1,15 +1,10 @@
 ﻿using HarmonyLib;
 using InControl;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using UnboundLib;
 
 namespace RCO.Patches {
     [HarmonyPatch(typeof(PlayerActions),"CreateWithControllerBindings")]
-    public class PlayerActionsPatch {
+    public class PlayerActionsPatchControler {
 
         // rebind controls as layed out in the document
         public static bool Prefix(ref PlayerActions __result) {
@@ -26,8 +21,18 @@ namespace RCO.Patches {
             playerActions.AimRight.AddDefaultBinding(InputControlType.RightStickRight);
             playerActions.AimUp.AddDefaultBinding(InputControlType.RightStickUp);
             playerActions.AimDown.AddDefaultBinding(InputControlType.RightStickDown);
+            playerActions.InvokeMethod("CreatePlayerAction", "Grapple");
             __result =  playerActions;
             return false;
+        }
+
+    }
+    [HarmonyPatch(typeof(PlayerActions), "CreateWithKeyboardBindings")]
+    public class PlayerActionsPatchKeyboard {
+
+        // rebind controls as layed out in the document
+        public static void Postfix(ref PlayerActions __result) {
+            ((PlayerAction)__result.InvokeMethod("CreatePlayerAction", "Grapple")).AddDefaultBinding(Key.E);
         }
 
     }
