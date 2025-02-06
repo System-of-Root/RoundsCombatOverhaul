@@ -22,10 +22,12 @@ namespace RCO {
 
         public const string ModId = "com.roots.rounds.RoundsCombatOverhaul", 
             ModName = "RoundsCombatOverhaul", 
-            Version = "0.0.15";
+            Version = "0.0.19";
 
         public static readonly AssetBundle RCOAsset = Jotunn.Utils.AssetUtils.LoadAssetBundleFromResources("rco_asset", typeof(Main).Assembly);
         public static GameObject GrapplingRopePrefab = RCOAsset.LoadAsset<GameObject>("GrapplingSource");
+        public static GameObject LoseControlVFXPrefab = RCOAsset.LoadAsset<GameObject>("VFX_Confused");
+        public static GameObject DisarmedVFXPrefab = RCOAsset.LoadAsset<GameObject>("VFX_Disarmed");
 
         void Awake() {
             var harmony = new Harmony(ModId);
@@ -67,40 +69,8 @@ namespace RCO {
                     LoseControlHandler handler = playerObj.AddComponent<LoseControlHandler>();
                     UnityEngine.Debug.Log("[RCO] added [LoseControlHandler] to the original Player object");
 
-                    GameObject loseControlVFX = RCOAsset.LoadAsset<GameObject>("VFX_Confused");
-                    GameObject disarmedVFX = RCOAsset.LoadAsset<GameObject>("VFX_Disarmed");
-
-                    // adding [Lose Control] VFX
-                    UnityEngine.Debug.Log("[RCO] VFX A");
-                    GameObject parentObj = new GameObject("LoseControl_VFX");
-                    parentObj.transform.parent = playerObj.transform;
-                    parentObj.transform.localPosition = Vector3.zero;
-
-                    GameObject vfxObject = GameObject.Instantiate(loseControlVFX);
-                    vfxObject.transform.parent = parentObj.transform;
-                    vfxObject.transform.localPosition = Vector3.zero + new Vector3(0.0f, -1.0f, 0.0f);
-                    vfxObject.transform.localScale = Vector3.one * 2.0f;
-                    vfxObject.SetActive(false);
-
-                    handler.LoseControlVFX = parentObj.AddComponent<SimpleStatusVFX>();
-                    handler.LoseControlVFX.targetObject = vfxObject;
-
-                    // adding [Disarmed]
-                    UnityEngine.Debug.Log("[RCO] VFX B");
-                    parentObj = new GameObject("Disarmed_VFX");
-                    parentObj.transform.parent = playerObj.transform;
-                    parentObj.transform.localPosition = Vector3.zero;
-
-                    vfxObject = GameObject.Instantiate(disarmedVFX);
-                    vfxObject.transform.parent = parentObj.transform;
-                    vfxObject.transform.localPosition = Vector3.zero + new Vector3(0.0f, 1.5f, 0.0f);
-                    vfxObject.transform.localScale = Vector3.one * 2.0f;
-                    vfxObject.SetActive(false);
-
-                    handler.DisarmedVFX = parentObj.AddComponent<SimpleStatusVFX>();
-                    handler.DisarmedVFX.targetObject = vfxObject;
-
-                    UnityEngine.Debug.Log("[RCO] VFX Done!");
+                    playerObj.AddComponent<RCO_RPCA_Handler>();
+                    UnityEngine.Debug.Log("[RCO] added [RCO_RPCA_Handler] to the original Player object");
                 }
             });
             

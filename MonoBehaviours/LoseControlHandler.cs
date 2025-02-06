@@ -30,6 +30,48 @@ namespace RCO.MonoBehaviours
 
         private void Update()
         {
+            // VFX section, for some reason it get cleared when return to main menu on original Player object
+            if (LoseControlVFX == null)
+            {
+                // adding [Lose Control] VFX
+                UnityEngine.Debug.Log("[RCO] VFX A");
+                GameObject parentObj = new GameObject("LoseControl_VFX");
+                parentObj.transform.parent = gameObject.transform;
+                parentObj.transform.localPosition = Vector3.zero;
+                // DontDestroyOnLoad(parentObj);
+
+                GameObject vfxObject = GameObject.Instantiate(Main.LoseControlVFXPrefab);
+                vfxObject.transform.parent = parentObj.transform;
+                vfxObject.transform.localPosition = Vector3.zero + new Vector3(0.0f, -1.0f, 0.0f);
+                vfxObject.transform.localScale = Vector3.one * 2.0f;
+                vfxObject.SetActive(false);
+                // DontDestroyOnLoad(vfxObject);
+
+                LoseControlVFX = parentObj.AddComponent<SimpleStatusVFX>();
+                LoseControlVFX.targetObject = vfxObject;
+            }
+
+            if (DisarmedVFX == null)
+            {
+                // adding [Disarmed]
+                UnityEngine.Debug.Log("[RCO] VFX B");
+                GameObject parentObj = new GameObject("Disarmed_VFX");
+                parentObj.transform.parent = gameObject.transform;
+                parentObj.transform.localPosition = Vector3.zero;
+                // DontDestroyOnLoad(parentObj);
+
+                GameObject vfxObject = GameObject.Instantiate(Main.DisarmedVFXPrefab);
+                vfxObject.transform.parent = parentObj.transform;
+                vfxObject.transform.localPosition = Vector3.zero + new Vector3(0.0f, 1.5f, 0.0f);
+                vfxObject.transform.localScale = Vector3.one * 2.0f;
+                vfxObject.SetActive(false);
+                // DontDestroyOnLoad(vfxObject);
+
+                DisarmedVFX = parentObj.AddComponent<SimpleStatusVFX>();
+                DisarmedVFX.targetObject = vfxObject;
+            }
+            
+
             // [Lose Control] section
             if (data.GetOverhaulData().loseControlTimer > 0f)
             {
@@ -122,6 +164,8 @@ namespace RCO.MonoBehaviours
 
             // only ever run when reviving...?
             StopLoseControl();
+            StopDisarmed();
+            StopImmobile();
         }
 
         [PunRPC]
