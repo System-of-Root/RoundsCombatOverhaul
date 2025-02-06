@@ -42,6 +42,13 @@ namespace RCO.Patches {
                 // UnityEngine.Debug.Log($"[RCO] Postfix -- Player[{___data.player.playerID}] is non-local player");
                 return;
             }
+            if(___data.GetOverhaulData().isGrappled) {
+                ___data.GetOverhaulData().grappleTimer += TimeHandler.deltaTime;
+                if(___data.GetOverhaulData().grappleTimer > 1.5f)
+                    ___data.view.RPC("RPCA_GrappleState", RpcTarget.All, ___data.player.playerID, false);
+            } else {
+                ___data.GetOverhaulData().grappleTimer = 0;
+            }
 
             bool grapleWasPressed = __instance.inputType == GeneralInput.InputType.Controller ? __instance.shootIsPressed && !__instance.shootWasReleased 
                 : __instance.GetComponent<CharacterData>().playerActions["Grapple"].IsPressed && !__instance.GetComponent<CharacterData>().playerActions["Grapple"].WasReleased;
@@ -116,7 +123,7 @@ namespace RCO.Patches {
                 float maxLangth = MainCam.instance.cam.orthographicSize;
                 int layerMask = (1 << 0)| (1 << 11) | (1 << 10);
                 RaycastHit2D hit = Physics2D.Raycast(___data.weaponHandler.gun.transform.position, __instance.lastAimDirection, maxLangth, layerMask); ;
-                if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
+                //if(hit.collider != null) UnityEngine.Debug.Log(hit.collider.gameObject.name);
 
 
                 if(hit.collider == null || hit.collider.gameObject.layer == 0) {  //Miss and get [Disarmed]

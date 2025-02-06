@@ -4,8 +4,7 @@ using RCO.VFX;
 using UnboundLib;
 using UnityEngine;
 
-namespace RCO.MonoBehaviours
-{
+namespace RCO.MonoBehaviours {
     public class LoseControlHandler : MonoBehaviour
     {
         // [Header("Settings")]
@@ -34,7 +33,7 @@ namespace RCO.MonoBehaviours
             if (LoseControlVFX == null)
             {
                 // adding [Lose Control] VFX
-                UnityEngine.Debug.Log("[RCO] VFX A");
+                //UnityEngine.Debug.Log("[RCO] VFX A");
                 GameObject parentObj = new GameObject("LoseControl_VFX");
                 parentObj.transform.parent = gameObject.transform;
                 parentObj.transform.localPosition = Vector3.zero;
@@ -54,7 +53,7 @@ namespace RCO.MonoBehaviours
             if (DisarmedVFX == null)
             {
                 // adding [Disarmed]
-                UnityEngine.Debug.Log("[RCO] VFX B");
+                //UnityEngine.Debug.Log("[RCO] VFX B");
                 GameObject parentObj = new GameObject("Disarmed_VFX");
                 parentObj.transform.parent = gameObject.transform;
                 parentObj.transform.localPosition = Vector3.zero;

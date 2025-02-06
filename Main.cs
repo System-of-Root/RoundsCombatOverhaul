@@ -1,12 +1,8 @@
 ﻿using BepInEx;
 using HarmonyLib;
-using RCO.Dev;
 using RCO.MonoBehaviours;
-using RCO.VFX;
 using System.Collections.Generic;
-using System.Linq;
 using UnboundLib;
-using UnboundLib.Cards;
 using UnboundLib.Utils;
 using UnityEngine;
 
@@ -22,7 +18,7 @@ namespace RCO {
 
         public const string ModId = "com.roots.rounds.RoundsCombatOverhaul", 
             ModName = "RoundsCombatOverhaul", 
-            Version = "0.0.19";
+            Version = "0.0.20";
 
         public static readonly AssetBundle RCOAsset = Jotunn.Utils.AssetUtils.LoadAssetBundleFromResources("rco_asset", typeof(Main).Assembly);
         public static GameObject GrapplingRopePrefab = RCOAsset.LoadAsset<GameObject>("GrapplingSource");
@@ -67,10 +63,10 @@ namespace RCO {
                 if (check)
                 {
                     LoseControlHandler handler = playerObj.AddComponent<LoseControlHandler>();
-                    UnityEngine.Debug.Log("[RCO] added [LoseControlHandler] to the original Player object");
+                    //UnityEngine.Debug.Log("[RCO] added [LoseControlHandler] to the original Player object");
 
                     playerObj.AddComponent<RCO_RPCA_Handler>();
-                    UnityEngine.Debug.Log("[RCO] added [RCO_RPCA_Handler] to the original Player object");
+                    //UnityEngine.Debug.Log("[RCO] added [RCO_RPCA_Handler] to the original Player object");
                 }
             });
             
