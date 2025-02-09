@@ -16,9 +16,9 @@ namespace RCO {
         public static GameObject playerMonitor;
         /**/public static GameObject playerObj;
 
-        public const string ModId = "com.roots.rounds.RoundsCombatOverhaul", 
-            ModName = "RoundsCombatOverhaul", 
-            Version = "0.0.20";
+        public const string ModId = "pudassassin.and.root.RoundsCombatOverhaul", 
+            ModName = "Rounds Combat Overhaul", 
+            Version = "1.0.0";
 
         public static readonly AssetBundle RCOAsset = Jotunn.Utils.AssetUtils.LoadAssetBundleFromResources("rco_asset", typeof(Main).Assembly);
         public static GameObject GrapplingRopePrefab = RCOAsset.LoadAsset<GameObject>("GrapplingSource");
